@@ -48,9 +48,6 @@ You need replace ```line 7``` on creds.json
 Repeat this steps for ```password```
 
 
-Remember add sudo password in ```config.json``` (base64 string format)
-
-
 ## Dependencies 
 
 - Pyvmomi
