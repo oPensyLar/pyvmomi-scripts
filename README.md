@@ -10,6 +10,7 @@
 
 ## How It Works?
 
+- pip install pyvmomi
 - Add you ESXi IPv4/IPv6 addr to config.json
 - Encode you creds & save into config.json
 - Ran python main.py
