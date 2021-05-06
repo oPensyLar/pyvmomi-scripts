@@ -34,10 +34,10 @@ def listear():
     a = app.App()
     utils = util.Util()
 
-    ip = "192.168.1.149"
-    creds_b64 = a.get_creds("creds.json")
-    usr = utils.b64_decrypt(creds_b64["usr"])
-    pwd = utils.b64_decrypt(creds_b64["passwd"])
+    config = a.get_creds("config.json")
+    ip = config["ip"]
+    usr = utils.b64_decrypt(config["usr"])
+    pwd = utils.b64_decrypt(config["passwd"])
 
     si = SmartConnectNoSSL(host=ip, user=usr, pwd=pwd)
 

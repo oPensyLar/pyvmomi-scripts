@@ -9,7 +9,8 @@ class App:
 
             for key in json_data["creds"]:
                 return {"usr": json_data["creds"]["user"],
-                        "passwd": json_data["creds"]["password"]}
+                        "passwd": json_data["creds"]["password"],
+                        "ip": json_data["ip"]}
 
     def get_array_cmd(self, file_path, sudo_pass):
         array_ret = []
