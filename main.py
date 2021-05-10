@@ -4,6 +4,7 @@ from pyVmomi import vim
 import app
 import util
 
+
 def print_vminfo(vm, depth=1):
     if hasattr(vm, 'childEntity'):
         if depth > 10:
@@ -17,7 +18,16 @@ def print_vminfo(vm, depth=1):
         return
 
     summary = vm.summary
-    print("Name:: " + summary.config.name)
+
+    nam = None
+
+    if hasattr(summary.config, "name"):
+        nam = summary.config.name
+
+    else:
+        nam = "[NoName]"
+
+    print("Name:: " + nam)
     print("PowerState:: " + summary.runtime.powerState)
     print("Guest:: " + summary.config.guestFullName)
     # print("Hostname:: " + summary.config.network.dnsConfig.hostName)
