@@ -21,13 +21,10 @@ def print_vminfo(vm, depth=1):
 
     nam = None
 
-    if hasattr(summary.config, "name"):
-        nam = summary.config.name
+    if hasattr(summary.config, "name") is False:
+        return
 
-    else:
-        nam = "[NoName]"
-
-    print("Name:: " + nam)
+    print("Name:: " + summary.config.name)
     print("PowerState:: " + summary.runtime.powerState)
     print("Guest:: " + summary.config.guestFullName)
     # print("Hostname:: " + summary.config.network.dnsConfig.hostName)
