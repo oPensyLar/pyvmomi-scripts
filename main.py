@@ -5,6 +5,7 @@ import app
 import util
 import export_csv
 
+
 def print_vminfo(vm, dns, owner, depth=1):
     if hasattr(vm, 'childEntity'):
         if depth > 10:
@@ -13,7 +14,7 @@ def print_vminfo(vm, dns, owner, depth=1):
         vmlist = vm.childEntity
 
         for child in vmlist:
-            print_vminfo(child, depth+1)
+            print_vminfo(child, owner, depth+1)
 
         return None
 
