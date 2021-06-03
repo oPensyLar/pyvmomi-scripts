@@ -4,9 +4,21 @@ from pyVmomi import vim
 import app
 import util
 import export_csv
+import socket
 
 
-def print_vminfo(vm, dns, owner, depth=1):
+def dns_resolver(ip_addr):
+    try:
+        dns_nam = socket.gethostbyaddr(ip_addr)
+        dns_nam = dns_nam[0]
+
+    except socket.herror:
+        dns_nam = "Unknow"
+
+    return dns_nam
+
+
+def print_vminfo(esix_ip_address, vm, dns, owner, depth=1):
     if hasattr(vm, 'childEntity'):
         if depth > 10:
             return None
@@ -14,35 +26,40 @@ def print_vminfo(vm, dns, owner, depth=1):
         vmlist = vm.childEntity
 
         for child in vmlist:
-            print_vminfo(child, owner, depth+1)
+            print_vminfo(esix_ip_address, child, owner, depth+1)
 
         return None
 
     summary = vm.summary
+    nets = vm.guest.net
 
     nam = None
-    dict_vals = {"Name": None, "State": None, "Status": None, "OS": None, "ManagedBy": None, "IPAddress": None, "Owner": None, "DNS": None}
+    dict_vals = {"name": None, "state": None, "status": None, "os": None, "managed_by": None, "vm_ip_address": None, "vm_dns_name": None, "owner": None, "esxi_ip_address_server": None, "dns_server": None}
+
+    for net in nets:
+        for c_ipAddress in net.ipAddress:
+            dict_vals["vm_ip_address"] = c_ipAddress
 
     if hasattr(summary.config, "name") is False:
         return
 
     if owner is None:
-        dict_vals["Owner"] = "[NoValue]"
+        dict_vals["owner"] = "[NoValue]"
 
     if dns is None:
-        dict_vals["DNS"] = "[NoValue]"
+        dict_vals["dns_name"] = "[NoValue]"
 
     # print("Name:: " + summary.config.name)
-    dict_vals["Name"] = summary.config.name
+    dict_vals["name"] = summary.config.name
 
     # print("State:: " + summary.runtime.powerState)
-    dict_vals["State"] = summary.runtime.powerState
+    dict_vals["state"] = summary.runtime.powerState
 
     # print("Status:: " + summary.guest.toolsStatus)
-    dict_vals["Status"] = summary.guest.toolsStatus
+    dict_vals["status"] = summary.guest.toolsStatus
 
     # print("OS:: " + summary.config.guestFullName)
-    dict_vals["OS"] = summary.config.guestFullName
+    dict_vals["os"] = summary.config.guestFullName
 
     if summary.config.managedBy is None:
         managed = "[NoValue]"
@@ -51,31 +68,22 @@ def print_vminfo(vm, dns, owner, depth=1):
         managed = summary.config.managedBy
 
     # print("Managed By:: " + managed)
-    dict_vals["ManagedBy"] = managed
-
-    # print("Hostname:: " + summary.config.network.dnsConfig.hostName)
-
-    if summary.guest.ipAddress is not None:
-        ip_addr = summary.guest.ipAddress
-    else:
-        ip_addr = "[NoValue]"
-
-        print("IP Address:: " + ip_addr)
-        dict_vals["IPAddress"] = ip_addr
+    dict_vals["managed_by"] = managed
 
     # print("\n")
     return dict_vals
 
 
 def listear():
-    dns_hostname = None
+    esxi_dns_hostname = None
     owner = None
     vms_vector = []
 
     a = app.App()
     utils = util.Util()
-    config = a.get_creds("config.json")
+    config = a.get_creds("config.json.test")
     ip = config["ip"]
+    esxi_dns_hostname = dns_resolver(ip)
     usr = utils.b64_decrypt(config["usr"])
     pwd = utils.b64_decrypt(config["passwd"])
 
@@ -100,10 +108,6 @@ def listear():
     cv = content.viewManager.CreateContainerView(
         container=content.rootFolder, type=[vim.HostSystem], recursive=True)
 
-    for child in cv.view:
-        dns_hostname = child.config.network.dnsConfig.hostName
-        # print("DNS Name:: ", dns_hostname)
-
 
     for datacenter in content.rootFolder.childEntity:
         # print("datacenter : " + datacenter.name)
@@ -111,7 +115,7 @@ def listear():
         vmlist = vmFolder.childEntity
 
         for vm in vmlist:
-            vms_dict = print_vminfo(vm, dns_hostname, owner)
+            vms_dict = print_vminfo(ip, vm, esxi_dns_hostname, owner)
 
             if vms_dict is not None:
                 vms_vector.append(vms_dict)
@@ -121,5 +125,5 @@ def listear():
 
 dats_vector = listear()
 class_csv = export_csv.ToCsv()
-headers = ["Name", "State", "Status", "OS", "ManagedBy", "IPAddress", "Owner", "DNS"]
+headers = ["name", "state", "status", "os", "managed_by", "vm_ip_address", "vm_dns_name", "owner", "esxi_ip_address_server", "dns_server"]
 class_csv.export_csv("esix_vms.csv", headers, dats_vector)
