@@ -7,6 +7,18 @@ import export_csv
 import socket
 
 
+def get_config():
+    a = app.App()
+    utils = util.Util()
+    config = a.get_creds("config.json.test")
+    ip = config["ip"]
+    esxi_dns_hostname = dns_resolver(ip)
+    usr = utils.b64_decrypt(config["usr"])
+    pwd = utils.b64_decrypt(config["passwd"])
+
+    return {"server_ip":  ip, "server_dns_name": esxi_dns_hostname, "user_name": usr, "user_password": pwd}
+
+
 def dns_resolver(ip_addr):
     try:
         dns_nam = socket.gethostbyaddr(ip_addr)
@@ -18,7 +30,7 @@ def dns_resolver(ip_addr):
     return dns_nam
 
 
-def print_vminfo(esix_ip_address, vm, dns, owner, depth=1):
+def print_vminfo(vm, cluster, server_dats, depth=1):
     if hasattr(vm, 'childEntity'):
         if depth > 10:
             return None
@@ -26,7 +38,7 @@ def print_vminfo(esix_ip_address, vm, dns, owner, depth=1):
         vmlist = vm.childEntity
 
         for child in vmlist:
-            print_vminfo(esix_ip_address, child, owner, depth+1)
+            print_vminfo(child, cluster, server_dats, depth+1)
 
         return None
 
@@ -34,20 +46,30 @@ def print_vminfo(esix_ip_address, vm, dns, owner, depth=1):
     nets = vm.guest.net
 
     nam = None
-    dict_vals = {"name": None, "state": None, "status": None, "os": None, "managed_by": None, "vm_ip_address": None, "vm_dns_name": None, "owner": None, "esxi_ip_address_server": None, "dns_server": None}
+    dict_vals = {"name": None,
+                 "state": None,
+                 "status": None,
+                 "cluster": cluster.name,
+                 "boot_time": vm.runtime.bootTime,
+                 "os": None,
+                 "managed_by": None,
+                 "vm_ip_address": None,
+                 "vm_dns_name": None,
+                 "owner": None,
+                 "esxi_ip_address_server": server_dats["server_ip"],
+                 "esxi_dns_name_server": server_dats["server_dns_name"]}
 
     for net in nets:
         for c_ipAddress in net.ipAddress:
             dict_vals["vm_ip_address"] = c_ipAddress
 
+    dict_vals["vm_dns_name"] = dns_resolver(dict_vals["vm_ip_address"])
+
     if hasattr(summary.config, "name") is False:
         return
 
-    if owner is None:
-        dict_vals["owner"] = "[NoValue]"
-
-    if dns is None:
-        dict_vals["dns_name"] = "[NoValue]"
+    # "server_ip": ip, "server_dns_name": esxi_dns_hostname,
+    dict_vals["owner"] = "[NoValue]"
 
     # print("Name:: " + summary.config.name)
     dict_vals["name"] = summary.config.name
@@ -61,61 +83,41 @@ def print_vminfo(esix_ip_address, vm, dns, owner, depth=1):
     # print("OS:: " + summary.config.guestFullName)
     dict_vals["os"] = summary.config.guestFullName
 
-    if summary.config.managedBy is None:
-        managed = "[NoValue]"
-
-    else:
-        managed = summary.config.managedBy
-
     # print("Managed By:: " + managed)
-    dict_vals["managed_by"] = managed
+    dict_vals["managed_by"] = dict_vals["vm_ip_address"]
 
     # print("\n")
     return dict_vals
 
 
-def listear():
-    esxi_dns_hostname = None
+def listear(cfg_dats):
     owner = None
+    cluster = None
     vms_vector = []
 
-    a = app.App()
-    utils = util.Util()
-    config = a.get_creds("config.json.test")
-    ip = config["ip"]
-    esxi_dns_hostname = dns_resolver(ip)
-    usr = utils.b64_decrypt(config["usr"])
-    pwd = utils.b64_decrypt(config["passwd"])
-
-    si = SmartConnectNoSSL(host=ip, user=usr, pwd=pwd)
+    si = SmartConnectNoSSL(host=cfg_dats["server_ip"],
+                           user=cfg_dats["user_name"],
+                           pwd=cfg_dats["user_password"])
 
     atexit.register(Disconnect, si)
     content = si.RetrieveContent()
     cfm = content.customFieldsManager
 
-    if cfm is None:
-        print("[!] OWNER not available")
-
-    else:
-        required_field = ["Owner"]
-        my_customField = {}
-        for my_field in cfm.field:
-            if my_field.name in required_field:
-                my_customField[my_field.key] = my_field.name
-                # print("Owner:: " + my_field.name)
-                owner = my_field.name
-
-    cv = content.viewManager.CreateContainerView(
-        container=content.rootFolder, type=[vim.HostSystem], recursive=True)
-
+    # cv = content.viewManager.CreateContainerView(container=content.rootFolder, type=[vim.HostSystem], recursive=True)
 
     for datacenter in content.rootFolder.childEntity:
         # print("datacenter : " + datacenter.name)
         vmFolder = datacenter.vmFolder
         vmlist = vmFolder.childEntity
 
+        clusters = datacenter.hostFolder.childEntity
+
+        for c_cluster in clusters:
+            cluster = c_cluster
+
         for vm in vmlist:
-            vms_dict = print_vminfo(ip, vm, esxi_dns_hostname, owner)
+            # cfg_dats
+            vms_dict = print_vminfo(vm, cluster, cfg_dats)
 
             if vms_dict is not None:
                 vms_vector.append(vms_dict)
@@ -123,7 +125,22 @@ def listear():
     return vms_vector
 
 
-dats_vector = listear()
+config_dats = get_config()
+dats_vector = listear(config_dats)
+
 class_csv = export_csv.ToCsv()
-headers = ["name", "state", "status", "os", "managed_by", "vm_ip_address", "vm_dns_name", "owner", "esxi_ip_address_server", "dns_server"]
+
+headers = ["name",
+           "state",
+           "status",
+           "cluster",
+           "boot_time",
+           "os",
+           "managed_by",
+           "vm_ip_address",
+           "vm_dns_name",
+           "owner",
+           "esxi_ip_address_server",
+           "esxi_dns_name_server"]
+
 class_csv.export_csv("esix_vms.csv", headers, dats_vector)
