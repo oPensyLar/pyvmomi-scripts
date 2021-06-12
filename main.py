@@ -87,9 +87,6 @@ def print_vminfo(vm, cluster, server_dats, depth=1):
     # print("OS:: " + summary.config.guestFullName)
     dict_vals["os"] = summary.config.guestFullName
 
-    # print("Managed By:: " + managed)
-    dict_vals["managed_by"] = dict_vals["vm_ip_address"]
-
     # print("\n")
     return dict_vals
 
