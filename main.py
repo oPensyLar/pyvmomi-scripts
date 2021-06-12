@@ -48,22 +48,29 @@ def print_vminfo(vm, cluster, server_dats, depth=1):
     nam = None
     dict_vals = {"name": None,
                  "state": None,
-                 "status": None,
+                 "status": vm.configStatus,
                  "cluster": cluster.name,
                  "boot_time": vm.runtime.bootTime,
                  "os": None,
-                 "managed_by": None,
+                 "managed_by": vm.config.managedBy,
                  "vm_ip_address": None,
                  "vm_dns_name": None,
                  "owner": None,
                  "esxi_ip_address_server": server_dats["server_ip"],
                  "esxi_dns_name_server": server_dats["server_dns_name"]}
 
+    if dict_vals["status"] == "green":
+        dict_vals["status"] = "Normal"
+
     for net in nets:
         for c_ipAddress in net.ipAddress:
             dict_vals["vm_ip_address"] = c_ipAddress
 
-    dict_vals["vm_dns_name"] = dns_resolver(dict_vals["vm_ip_address"])
+    if dict_vals["vm_ip_address"] is None:
+        dict_vals["vm_dns_name"] = "Unknow"
+
+    else:
+        dict_vals["vm_dns_name"] = dns_resolver(dict_vals["vm_ip_address"])
 
     if hasattr(summary.config, "name") is False:
         return
@@ -76,9 +83,6 @@ def print_vminfo(vm, cluster, server_dats, depth=1):
 
     # print("State:: " + summary.runtime.powerState)
     dict_vals["state"] = summary.runtime.powerState
-
-    # print("Status:: " + summary.guest.toolsStatus)
-    dict_vals["status"] = summary.guest.toolsStatus
 
     # print("OS:: " + summary.config.guestFullName)
     dict_vals["os"] = summary.config.guestFullName
