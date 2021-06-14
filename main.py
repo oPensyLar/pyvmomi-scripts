@@ -5,6 +5,29 @@ import app
 import util
 import export_csv
 import socket
+from datetime import datetime, timezone
+
+
+intervals = (
+    ('weeks', 604800),  # 60 * 60 * 24 * 7
+    ('days', 86400),    # 60 * 60 * 24
+    ('hours', 3600),    # 60 * 60
+    ('minutes', 60),
+    ('seconds', 1),
+    )
+
+
+def display_time(seconds, granularity=2):
+    result = []
+
+    for name, count in intervals:
+        value = seconds // count
+        if value:
+            seconds -= value * count
+            if value == 1:
+                name = name.rstrip('s')
+            result.append("{} {}".format(value, name))
+    return ', '.join(result[:granularity])
 
 
 def get_config():
@@ -43,14 +66,23 @@ def print_vminfo(vm, cluster, server_dats, depth=1):
         return None
 
     summary = vm.summary
+
+    if hasattr(vm, "guest") is False:
+        return
+
     nets = vm.guest.net
 
     nam = None
+
+    now = datetime.now(timezone.utc)
+    delta = now - vm.runtime.bootTime
+    t = display_time(delta.total_seconds())
+
     dict_vals = {"name": None,
                  "state": None,
                  "status": vm.configStatus,
                  "cluster": cluster.name,
-                 "boot_time": vm.runtime.bootTime,
+                 "boot_time": t,
                  "os": None,
                  "managed_by": vm.config.managedBy,
                  "vm_ip_address": None,
