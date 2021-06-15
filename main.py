@@ -56,9 +56,12 @@ def dns_resolver(ip_addr):
 def print_vminfo(vm, cluster, server_dats, depth=1):
     if hasattr(vm, 'childEntity'):
         if depth > 10:
+            print("depth > 10")
             return None
 
         vmlist = vm.childEntity
+
+        print("[+] vmlist " + len(vmlist))
 
         for child in vmlist:
             print_vminfo(child, cluster, server_dats, depth+1)
