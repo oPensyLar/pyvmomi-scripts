@@ -74,9 +74,13 @@ def print_vminfo(vm, cluster, server_dats, depth=1):
 
     nam = None
 
-    now = datetime.now(timezone.utc)
-    delta = now - vm.runtime.bootTime
-    t = display_time(delta.total_seconds())
+    if vm.runtime.bootTime is None:
+        t = "[NoValue]"
+
+    else:
+        now = datetime.now(timezone.utc)
+        delta = now - vm.runtime.bootTime
+        t = display_time(delta.total_seconds())
 
     dict_vals = {"name": None,
                  "state": None,
@@ -113,13 +117,10 @@ def print_vminfo(vm, cluster, server_dats, depth=1):
     # print("Name:: " + summary.config.name)
     dict_vals["name"] = summary.config.name
 
-    # print("State:: " + summary.runtime.powerState)
     dict_vals["state"] = summary.runtime.powerState
 
-    # print("OS:: " + summary.config.guestFullName)
     dict_vals["os"] = summary.config.guestFullName
 
-    # print("\n")
     return dict_vals
 
 
