@@ -70,12 +70,6 @@ def print_vminfo(vm, cluster, server_dats, depth=1):
 
     summary = vm.summary
 
-    if hasattr(vm, "guest") is False:
-        print("guest is False")
-        return
-
-    nets = vm.guest.net
-
     nam = None
 
     if vm.runtime.bootTime is None:
@@ -102,15 +96,17 @@ def print_vminfo(vm, cluster, server_dats, depth=1):
     if dict_vals["status"] == "green":
         dict_vals["status"] = "Normal"
 
-    for net in nets:
-        for c_ipAddress in net.ipAddress:
-            dict_vals["vm_ip_address"] = c_ipAddress
-
-    if dict_vals["vm_ip_address"] is None:
-        dict_vals["vm_dns_name"] = "Unknow"
+    if hasattr(vm, "guest") is False:
+        dict_vals["vm_ip_address"] = "[NoValue]"
+        dict_vals["vm_dns_name"] = dict_vals["vm_ip_address"]
 
     else:
-        dict_vals["vm_dns_name"] = dns_resolver(dict_vals["vm_ip_address"])
+        nets = vm.guest.net
+
+        for net in nets:
+            for c_ipAddress in net.ipAddress:
+                dict_vals["vm_ip_address"] = c_ipAddress
+                dict_vals["vm_dns_name"] = dns_resolver(dict_vals["vm_ip_address"])
 
     if hasattr(summary.config, "name") is False:
         return
