@@ -61,8 +61,6 @@ def print_vminfo(vm, cluster, server_dats, depth=1):
 
         vmlist = vm.childEntity
 
-        print("[+] vmlist " + len(vmlist))
-
         for child in vmlist:
             print_vminfo(child, cluster, server_dats, depth+1)
 
