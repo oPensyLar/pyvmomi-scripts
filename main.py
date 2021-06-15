@@ -71,6 +71,7 @@ def print_vminfo(vm, cluster, server_dats, depth=1):
     summary = vm.summary
 
     if hasattr(vm, "guest") is False:
+        print("guest is False")
         return
 
     nets = vm.guest.net
