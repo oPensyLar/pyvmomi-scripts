@@ -33,7 +33,7 @@ def display_time(seconds, granularity=2):
 def get_config():
     a = app.App()
     utils = util.Util()
-    config = a.get_creds("config.json.test")
+    config = a.get_creds("config.json")
     ip = config["ip"]
     esxi_dns_hostname = dns_resolver(ip)
     usr = utils.b64_decrypt(config["usr"])
