@@ -66,17 +66,16 @@ def print_vminfo(vm, cluster, server_dats, depth=1):
 
         return None
 
-    summary = vm.summary
-
-    nam = None
-
     if hasattr(vm.runtime, "bootTime") is False or vm.runtime.bootTime is None:
-        t = "[NoValue]"
+        return None
 
     else:
         now = datetime.now(timezone.utc)
         delta = now - vm.runtime.bootTime
         t = display_time(delta.total_seconds())
+
+    summary = vm.summary
+    nam = None
 
     dict_vals = {"name": None,
                  "state": None,
@@ -109,14 +108,9 @@ def print_vminfo(vm, cluster, server_dats, depth=1):
     if hasattr(summary.config, "name") is False:
         return
 
-    # "server_ip": ip, "server_dns_name": esxi_dns_hostname,
     dict_vals["owner"] = "[NoValue]"
-
-    # print("Name:: " + summary.config.name)
     dict_vals["name"] = summary.config.name
-
     dict_vals["state"] = summary.runtime.powerState
-
     dict_vals["os"] = summary.config.guestFullName
 
     return dict_vals
