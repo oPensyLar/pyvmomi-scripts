@@ -1,10 +1,10 @@
 {
 
-  "ip" : "192.168.1.171",
+  "ip" : "192.168.1.9",
 
   "creds" : {
 
-    "user" : "cm9vdA==",
-    "password" : "UHhndHNqbW50LjIwMjE="
+    "user" : "YWRtaW5pc3RyYXRvckB2c3BoZXJlLmxvY2Fs",
+    "password" : "UHhndHNqbW50LTEyMw=="
   }
 }

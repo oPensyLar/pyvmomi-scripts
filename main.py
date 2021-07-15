@@ -70,7 +70,7 @@ def print_vminfo(vm, cluster, server_dats, depth=1):
 
     nam = None
 
-    if vm.runtime.bootTime is None:
+    if hasattr(vm.runtime, "bootTime") is False or vm.runtime.bootTime is None:
         t = "[NoValue]"
 
     else:
@@ -131,14 +131,26 @@ def listear(cfg_dats):
                            user=cfg_dats["user_name"],
                            pwd=cfg_dats["user_password"])
 
-    atexit.register(Disconnect, si)
+    # atexit.register(Disconnect, si)
     content = si.RetrieveContent()
-    cfm = content.customFieldsManager
-
+    # cfm = content.customFieldsManager
     # cv = content.viewManager.CreateContainerView(container=content.rootFolder, type=[vim.HostSystem], recursive=True)
 
+    obj_view = content.viewManager.CreateContainerView(content.rootFolder,
+                                                       [vim.StoragePod],
+                                                       True)
+    ds_cluster_list = obj_view.view
+    obj_view.Destroy()
+
+    for ds_cluster in ds_cluster_list:
+        datastores = ds_cluster.childEntity
+        print("Datastores: ")
+
+        for datastore in datastores:
+            print(datastore.name)
+
     for datacenter in content.rootFolder.childEntity:
-        # print("datacenter : " + datacenter.name)
+        print("datacenter : " + datacenter.name)
         vmFolder = datacenter.vmFolder
         vmlist = vmFolder.childEntity
 
